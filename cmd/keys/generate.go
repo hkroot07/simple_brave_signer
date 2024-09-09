@@ -4,9 +4,13 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
+	"encoding/base64"
+	"encoding/pem"
 	"fmt"
+	"os"
 	"path/filepath"
 	"simple_brave_signer/crypto_utils"
+	"simple_brave_signer/logger"
 	"simple_brave_signer/utils"
 
 	"github.com/spf13/cobra"
@@ -41,7 +45,34 @@ var keyGenerateCmd = &cobra.Command{
 			saltSize:   saltSize,
 		}
 
+		privateKey, err := generatePrivKey(pkGenConfig)
+		logger.HaltOnErr(err)
+
+		pubOut, _ := cmd.Flags().GetString("pub-out")
 	},
+}
+
+func generatePubKey(path string, privKey *rsa.PrivateKey) error {
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return fmt.Errorf("failed to get absolute path: %v", err)
+	}
+
+	pubASN1, err := x509.MarshalPKIXPublicKey(&privKey.PublicKey)
+	if err != nil {
+		return fmt.Errorf("failed to marshal public key: %w", err)
+	}
+
+	file, err := os.Create(absPath)
+	if err != nil {
+		return fmt.Errorf("failed to create bublic key  file: %w", err)
+	}
+	defer file.Close()
+
+	if err := pem.Encode(file, &pem.Block{Type: "RSA PUBLIC KEY", Bytes: pubASN1}); err != nil {
+		return fmt.Errorf("failed to encode public key to PEM: %w", err)
+	}
+	return nil
 }
 
 func generatePrivKey(pkGenConfig PrivateKeyGen) (*rsa.PrivatKey, error) {
@@ -79,6 +110,43 @@ func generatePrivKey(pkGenConfig PrivateKeyGen) (*rsa.PrivatKey, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	nonce, err := crypto_utils.MakeNonce(crypter)
+	if err != nil {
+		return nil, err
+	}
+
+	encryptedData := crypter.Seal(nil, nonce, privateKeyBytes, nil)
+
+	encryptedPEMBlock := &pem.Block{
+		Type:  "ENCRYPTED PRIVATE KEY",
+		Bytes: encryptedData,
+		Headers: map[string]string{
+			"Nonce":                   base64.StdEncoding.EncodeToString(nonce),
+			"Salt":                    base64.StdEncoding.EncodeToString(salt),
+			"Key-Derivation-Function": "Argon2",
+		},
+	}
+
+	err = savePrivKeyToPEM(absPath, encryptedPEMBlock)
+	if err != nil {
+		return nil, err
+	}
+
+	return privateKey, nil
+}
+
+func savePrivKeyToPEM(absPath string, encryptedPEMBlock *pem.Block) error {
+	privKeyFile, err := os.Create(absPath)
+	if err != nil {
+		return fmt.Errorf("failed to create private key file: %v", err)
+	}
+	defer privKeyFile.Close()
+
+	if err := pem.Encode(privKeyFile, encryptedPEMBlock); err != nil {
+		return fmt.Errorf("failed to encode private key to PEM: %w", err)
+	}
+	return nil
 }
 
 func makeSalt(saltSize int) ([]byte, error) {
