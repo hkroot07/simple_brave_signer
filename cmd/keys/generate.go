@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"path/filepath"
+	"simple_brave_signer/crypto_utils"
 	"simple_brave_signer/utils"
 
 	"github.com/spf13/cobra"
@@ -62,6 +63,14 @@ func generatePrivKey(pkGenConfig PrivateKeyGen) (*rsa.PrivatKey, error) {
 	privateKeyBytes := x509.MarshalPKCS1PrivateKey(privateKey)
 
 	salt, err := makeSalt(pkGenConfig.saltSize)
+	if err != nil {
+		return nil, err
+	}
+
+	key, err := crypto_utils.DeriveKey(crypto_utils.KeyDerivationConfig{
+		Passphrase: passphrase,
+		Salt:       salt,
+	})
 	if err != nil {
 		return nil, err
 	}

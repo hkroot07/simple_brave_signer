@@ -1,6 +1,8 @@
-package cryptoutils
+package crypto_utils
 
 import (
+	"crypto/aes"
+	"crypto/cipher"
 	"fmt"
 
 	"golang.org/x/crypto/argon2"
@@ -9,6 +11,19 @@ import (
 type KeyDerivationConfig struct {
 	Passphrase []byte
 	Salt       []byte
+}
+
+func MakeCrypter(key []byte) (cipher.AEAD, error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create cipher block: %v", err)
+	}
+
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create GCM cipher: %v", err)
+	}
+	return gcm, nil
 }
 
 func DeriveKey(config KeyDerivationConfig) ([]byte, error) {
