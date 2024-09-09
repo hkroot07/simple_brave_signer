@@ -4,6 +4,9 @@ import "github.com/spf13/cobra"
 
 func init() {
 	keysCmd.AddCommand(keyGenerateCmd)
+	keyGenerateCmd.Flags().String("pub-out", "pub_key.pem", "Path to save the public key")
+	keyGenerateCmd.Flags().String("priv-out", "priv_key.pem", "Path to save the private key")
+	keyGenerateCmd.Flags().Int("pub-size", 2048, "Private key size in bits")
 }
 
 var keyGenerateCmd = &cobra.Command{
