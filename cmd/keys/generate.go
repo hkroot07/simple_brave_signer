@@ -66,3 +66,11 @@ func generatePrivKey(pkGenConfig PrivateKeyGen) (*rsa.PrivatKey, error) {
 		return nil, err
 	}
 }
+
+func makeSalt(saltSize int) ([]byte, error) {
+	salt := make([]byte, saltSize)
+	if _, err := rand.Read(salt); err != nil {
+		return nil, fmt.Errorf("failed to generate salt: %v", err)
+	}
+	return salt, nil
+}
