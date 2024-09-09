@@ -49,6 +49,8 @@ var keyGenerateCmd = &cobra.Command{
 		logger.HaltOnErr(err)
 
 		pubOut, _ := cmd.Flags().GetString("pub-out")
+		err = generatePubKey(pubOut, privateKey)
+		logger.HaltOnErr(err)
 	},
 }
 
@@ -75,7 +77,7 @@ func generatePubKey(path string, privKey *rsa.PrivateKey) error {
 	return nil
 }
 
-func generatePrivKey(pkGenConfig PrivateKeyGen) (*rsa.PrivatKey, error) {
+func generatePrivKey(pkGenConfig PrivateKeyGen) (*rsa.PrivateKey, error) {
 	absPath, err := filepath.Abs(pkGenConfig.outputPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get absolute path: %w", err)
