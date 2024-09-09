@@ -23,20 +23,20 @@ type PrivateKeyGen struct {
 }
 
 func init() {
-	keysCmd.AddCommand(keyGenerateCmd)
-	keyGenerateCmd.Flags().String("pub-out", "pub_key.pem", "Path to save the public key")
-	keyGenerateCmd.Flags().String("priv-out", "priv_key.pem", "Path to save the private key")
-	keyGenerateCmd.Flags().Int("pub-size", 2048, "Private key size in bits")
-	keyGenerateCmd.Flags().Int("salt-size", 16, "Salt size used in key derivation in bytes")
+	keysCmd.AddCommand(keysGenerateCmd)
+	keysGenerateCmd.Flags().String("pub-out", "pub_key.pem", "Path to save the public key")
+	keysGenerateCmd.Flags().String("priv-out", "priv_key.pem", "Path to save the private key")
+	keysGenerateCmd.Flags().Int("priv-size", 2048, "Private key size in bits")
+	keysGenerateCmd.Flags().Int("salt-size", 16, "Salt size used in key derivation in bytes")
 }
 
-var keyGenerateCmd = &cobra.Command{
+var keysGenerateCmd = &cobra.Command{
 	Use:   "generate",
 	Short: "Generates key pair.",
 	Long:  `Generate an RSA key pair and store it in PEM files. The private key will be encrypted using a passphrase that you'll need to enter. AES encryption with Argon2 key derivation function is utilized.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		pkOut, _ := cmd.Flags().GetString("prive-out")
-		pkSize, _ := cmd.Flags().GetInt("prive-size")
+		pkOut, _ := cmd.Flags().GetString("priv-out")
+		pkSize, _ := cmd.Flags().GetInt("priv-size")
 		saltSize, _ := cmd.Flags().GetInt("salt-size")
 
 		pkGenConfig := PrivateKeyGen{
@@ -80,7 +80,7 @@ func generatePubKey(path string, privKey *rsa.PrivateKey) error {
 func generatePrivKey(pkGenConfig PrivateKeyGen) (*rsa.PrivateKey, error) {
 	absPath, err := filepath.Abs(pkGenConfig.outputPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get absolute path: %w", err)
+		return nil, fmt.Errorf("failed to get absolute path: %v", err)
 	}
 
 	privateKey, err := rsa.GenerateKey(rand.Reader, pkGenConfig.keyBitSize)
