@@ -3,6 +3,7 @@ package crypto_utils
 import (
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/rand"
 	"fmt"
 
 	"golang.org/x/crypto/argon2"
@@ -11,6 +12,14 @@ import (
 type KeyDerivationConfig struct {
 	Passphrase []byte
 	Salt       []byte
+}
+
+func MakeNonce(crypter cipher.AEAD) ([]byte, error) {
+	nonce := make([]byte, crypter.NonceSize())
+	if _, err := rand.Read(nonce); err != nil {
+		return nil, fmt.Errorf("failed to generate nonce: %v", err)
+	}
+	return nonce, nil
 }
 
 func MakeCrypter(key []byte) (cipher.AEAD, error) {

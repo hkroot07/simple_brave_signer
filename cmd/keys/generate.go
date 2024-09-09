@@ -74,6 +74,11 @@ func generatePrivKey(pkGenConfig PrivateKeyGen) (*rsa.PrivatKey, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	crypter, err := crypto_utils.MakeCrypter(key)
+	if err != nil {
+		return nil, err
+	}
 }
 
 func makeSalt(saltSize int) ([]byte, error) {
