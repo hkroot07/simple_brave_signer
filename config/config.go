@@ -7,6 +7,10 @@ import (
 	"github.com/spf13/viper"
 )
 
+type ContextKey uint
+
+const ViperKey ContextKey = 0
+
 func LoadYamlConfig() (*viper.Viper, error) {
 	localViper := viper.New()
 	localViper.SetConfigName("config")
